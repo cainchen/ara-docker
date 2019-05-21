@@ -1,0 +1,49 @@
+version: '3.5'
+services:
+  ara:
+    depends_on:
+      - ara-mysql
+    image: local/ara
+    restart: always
+    container_name: ara
+    hostname: ara
+    networks:
+      - ara-network
+    ports:
+      - '8000:8000'
+    environment:
+      - ARA_DATABASE=mysql+pymysql://ara:arapasswd@ara-mysql/ara
+    dns:
+      - 192.168.1.10
+    links:
+      - ara-mysql
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://192.168.1.60:8000/about/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  ara-mysql:
+    image: mysql:5.7
+    restart: always
+    container_name: ara-mysql
+    hostname: ara-mysql
+    networks:
+      - ara-network
+    ports: 
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: ara
+      MYSQL_USER: ara
+      MYSQL_PASSWORD: arapasswd
+    dns:
+      - 192.168.1.10
+    volumes:
+      - ./my.cnf:/etc/mysql/my.cnf
+      - /var/mysql:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+networks:
+  ara-network:
+    driver: bridge
